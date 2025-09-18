@@ -1,17 +1,17 @@
-import {dashboardpage} from '../components/dashboard.js';
-import {patientspage} from '../components/patients.js';
-import {appointmentspage} from '../components/appointments.js';
-import {financepage} from '../components/finance.js';
-
+import {dashboardPage} from '../components/dashboard.js';
+import {patientsPage} from '../components/patients.js';
+import {appointmentsPage} from '../components/appointments.js';
+import {financePage} from '../components/finance.js';
 
 export function router() {
+    const hash = location.hash.substring(1);
+    // alert(hash); // Optional: remove or comment out for production
     const root = document.getElementById('root');
     root.innerHTML = '';
 
-    const hash = window.location.hash;
-
     let page;
-    switch(hach) {
+
+    switch(hash) {
         case 'patients':
             page = patientsPage();
             break;
@@ -22,11 +22,9 @@ export function router() {
             page = financePage();
             break;
         default:
-            page = homePage();
-
+            page = dashboardPage();
     }
 
-    page.classlist.add('active');
+    page.classList.add('active');
     root.appendChild(page);
-
 }

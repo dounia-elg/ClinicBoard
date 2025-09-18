@@ -1,4 +1,4 @@
-export function dashboerdpage() {
+export function dashboardPage() {
     const div = document.createElement('div');
     div.innerHTML = `
         <h1>Dashboard Page</h1>
