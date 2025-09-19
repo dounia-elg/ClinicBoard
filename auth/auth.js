@@ -5,3 +5,21 @@ export function simpleHash(password) {
     }
     return hash.toString();
 }
+
+export function checkLockStatus(errorMessage, loginBtn) {
+    const lockTime = localStorage.getItem('lockTime');
+    const now = Date.now();
+
+    if (lockTime && now < parseInt(lockTime) + 5 * 60 * 1000) {
+        const remainingTime = Math.ceil((parseInt(lockTime) + 5 * 60 * 1000 - now) / 1000);
+        errorMessage.textContent = `Too many attempts! Try again in ${remainingTime} seconds.`;
+        errorMessage.style.display = 'block';
+        loginBtn.disabled = true;
+        return true;
+    } else {
+        localStorage.removeItem('lockTime');
+        loginBtn.disabled = false;
+        errorMessage.style.display = 'none';
+        return false;
+    }
+}
