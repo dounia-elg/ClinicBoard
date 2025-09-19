@@ -1,5 +1,5 @@
 body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-nav { background: #0077cc; padding: 10px; }
+nav { background: #3ba851; padding: 10px; }
 nav a { color: white; margin: 0 10px; text-decoration: none; }
 nav a:hover { text-decoration: underline; }
 .page { display: none; padding: 20px; }
