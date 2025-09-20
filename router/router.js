@@ -8,41 +8,38 @@ export function router() {
     const hash = location.hash.substring(1);
     const root = document.getElementById('root');
     const nav = document.getElementsByTagName('nav')[0];
-
     root.innerHTML = '';
-
     let page;
-
-    
-    window.isAuthenticated = window.isAuthenticated || false;
 
     if (!window.isAuthenticated && hash !== '') {
         page = loginPage();
-        if (nav) nav.style.display = 'none';
+        nav.style.display = 'none';
     } else {
-        if (nav) nav.style.display = 'block';
-
-        switch (hash) {
-            case 'dashboard':
-                page = dashboardPage();
-                break;
-            case 'patients':
-                page = patientsPage();
-                break;
-            case 'appointments':
-                page = appointmentsPage();
-                break;
-            case 'finance':
-                page = financePage();
-                break;
-            default:
-                page = loginPage();
-                if (nav) nav.style.display = 'none';
+        if (hash === 'dashboard') {
+            nav.style.display = 'none'; 
+            page = dashboardPage();
+        } else {
+            nav.style.display = 'block'; 
+            switch (hash) {
+                case 'patients':
+                    page = patientsPage();
+                    break;
+                case 'appointments':
+                    page = appointmentsPage();
+                    break;
+                case 'finance':
+                    page = financePage();
+                    break;
+                case '':
+                    page = loginPage();
+                    nav.style.display = 'none';
+                    break;
+                default:
+                    page = loginPage();
+                    nav.style.display = 'none';
+            }
         }
     }
-
-    if (page) {
-        page.classList.add('active');
-        root.appendChild(page);
-    }
+    page.classList.add('active');
+    root.appendChild(page);
 }
