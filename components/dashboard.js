@@ -1,3 +1,4 @@
+import { getData } from '../storage/dataManager.js';
 
 export function dashboardPage() {
     const div = document.createElement('div');
@@ -153,12 +154,19 @@ export function dashboardPage() {
     div.appendChild(toggleBtn);
 
     
+    const data = getData();
+    const revenue = data.finance?.revenue || 0;
+    const expenses = data.finance?.expenses || 0;
+    const margin = revenue - expenses;
+    const numPatients = (data.patients || []).length;
+    const numAppointments = (data.appointments || []).length;
+
     div.innerHTML += `
         <div class="sidebar">
             <div class="sidebar-logo"><i class="fas fa-clinic-medical"></i> ClinicBoard</div>
             <a href="#dashboard" class="active"><i class="fas fa-home sidebar-icon"></i> Dashboard</a>
             <a href="#patients"><i class="fas fa-users sidebar-icon"></i> Patients</a>
-            <a href="#appointments"><i class="fas fa-calendar-check sidebar-icon"></i> Appointments</a>
+            <a href="#appointments"><i class="fas fa-calendar-check sidebar-icon"></i> RDV</a>
             <a href="#finance"><i class="fas fa-dollar-sign sidebar-icon"></i> Finance</a>
             <button onclick="window.isAuthenticated = false; location.hash = ''"><i class="fas fa-sign-out-alt sidebar-icon"></i> Logout</button>
         </div>
@@ -166,26 +174,30 @@ export function dashboardPage() {
             <h1 class="dashboard-header"><i class="fas fa-clinic-medical"></i> ClinicBoard Dashboard</h1>
             <div class="dashboard-cards">
                 <div class="card">
-                    <div class="card-icon"><i class="fas fa-users"></i></div>
-                    <h3>Patients</h3>
-                    <p>50 Total Patients</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon"><i class="fas fa-calendar-check"></i></div>
-                    <h3>Appointments</h3>
-                    <p>20 Total Appointments</p>
-                </div>
-                <div class="card">
-                    <div class="card-icon"><i class="fas fa-dollar-sign"></i></div>
-                    <h3>Revenue</h3>
-                    <p>10,000 MAD (Monthly)</p>
+                    <div class="card-icon"><i class="fas fa-coins"></i></div>
+                    <h3>Chiffre d’affaires mensuel</h3>
+                    <p>${revenue.toLocaleString('fr-FR')} MAD</p>
                 </div>
                 <div class="card">
                     <div class="card-icon"><i class="fas fa-wallet"></i></div>
-                    <h3>Expenses</h3>
-                    <p>4,000 MAD (Monthly)</p>
+                    <h3>Total dépenses</h3>
+                    <p>${expenses.toLocaleString('fr-FR')} MAD</p>
                 </div>
-                
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+                    <h3>Marge</h3>
+                    <p>${margin.toLocaleString('fr-FR')} MAD</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-users"></i></div>
+                    <h3>Nombre de patients</h3>
+                    <p>${numPatients}</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon"><i class="fas fa-calendar-check"></i></div>
+                    <h3>Nombre de consultations</h3>
+                    <p>${numAppointments}</p>
+                </div>
             </div>
         </div>
     `;
