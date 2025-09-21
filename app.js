@@ -1,10 +1,12 @@
 import {router} from './router/router.js';
 import './auth/auth.js';
+import { getAuthData, getData } from './storage/dataManager.js';
 
 
 window.addEventListener('load', () => {
-    
-    if (localStorage.getItem('passwordHash')) {
+    getData(); // Initializiw data if needed
+    const authData = getAuthData();
+    if (authData.passwordHash) {
         window.isAuthenticated = true;
     }
     router();

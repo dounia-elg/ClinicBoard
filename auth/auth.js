@@ -1,3 +1,6 @@
+import { getAuthData, updateAuthData } from '../storage/dataManager.js';
+
+
 export function simpleHash(password) {
     let hash = 0;
     for (let i = 0; i < password.length; i++) {
@@ -7,7 +10,8 @@ export function simpleHash(password) {
 }
 
 export function checkLockStatus(errorMessage, loginBtn) {
-    const lockTime = localStorage.getItem('lockTime');
+    const authData = getAuthData();
+    const lockTime = authData.lockTime;
     const now = Date.now();
 
     if (lockTime && now < parseInt(lockTime) + 5 * 60 * 1000) {
@@ -17,7 +21,7 @@ export function checkLockStatus(errorMessage, loginBtn) {
         loginBtn.disabled = true;
         return true;
     } else {
-        localStorage.removeItem('lockTime');
+        updateAuthData({ lockTime: null });
         loginBtn.disabled = false;
         errorMessage.style.display = 'none';
         return false;
@@ -32,41 +36,42 @@ export function authenticate(passwordInput, errorMessage, loginBtn) {
     }
 
     const hashedInput = simpleHash(passwordInput);
-    let storedHash = localStorage.getItem('passwordHash');
+    const authData = getAuthData();
+    const storedHash = authData.passwordHash;
+    let attempts = authData.loginAttempts || 0;
 
-    let attempts = parseInt(localStorage.getItem('loginAttempts') || '0');
-
-    const now = Date.now();
-    if (checkLockStatus(errorMessage, loginBtn)) {
-        return false;
+    // ila kant first time kandakhlo password jdid
+    if (!storedHash) {
+        updateAuthData({ passwordHash: hashedInput, loginAttempts: 0, lockTime: null });
+        window.isAuthenticated = true;
+        errorMessage.style.display = 'none';
+        return true;
     }
 
-    if (!storedHash) {
-        localStorage.setItem('passwordHash', hashedInput);
+   
+    if (hashedInput === storedHash) {
+        updateAuthData({ loginAttempts: 0, lockTime: null });
         window.isAuthenticated = true;
-        localStorage.setItem('loginAttempts', '0');
         errorMessage.style.display = 'none';
         return true;
     } else {
-        if (hashedInput === storedHash) {
-            window.isAuthenticated = true;
-            localStorage.setItem('loginAttempts', '0');
-            errorMessage.style.display = 'none';
-            return true;
-        } else {
-            attempts += 1;
-            localStorage.setItem('loginAttempts', attempts.toString());
-
-            if (attempts >= 3) {
-                localStorage.setItem('lockTime', now.toString());
-                errorMessage.textContent = 'Too many attempts! Try again in 5 minutes.';
-                errorMessage.style.display = 'block';
-                loginBtn.disabled = true;
-            } else {
-                errorMessage.textContent = `Wrong password! ${3 - attempts} attempts left.`;
-                errorMessage.style.display = 'block';
-            }
+        
+        if (checkLockStatus(errorMessage, loginBtn)) {
             return false;
         }
+        
+        attempts += 1;
+        updateAuthData({ loginAttempts: attempts });
+
+        if (attempts >= 3) {
+            updateAuthData({ lockTime: Date.now().toString() });
+            errorMessage.textContent = 'Too many attempts! Try again in 5 minutes.';
+            errorMessage.style.display = 'block';
+            loginBtn.disabled = true;
+        } else {
+            errorMessage.textContent = `Wrong password! ${3 - attempts} attempts left.`;
+            errorMessage.style.display = 'block';
+        }
+        return false;
     }
 }
