@@ -111,32 +111,30 @@ export function patientsPage() {
          }
          
          .edit-btn {
-             background: #ffc107;
-             color: white;
+             background: none;
              border: none;
-             padding: 8px 12px;
-             border-radius: 6px;
+             color: #ffc107;
              cursor: pointer;
-             font-size: 14px;
+             font-size: 18px;
+             padding: 5px;
+             margin-right: 10px;
          }
          
          .edit-btn:hover {
-             background: #e0a800;
+             color: #e0a800;
          }
          
          .delete-btn {
-             background: #dc3545;
-             color: white;
+             background: none;
              border: none;
-             padding: 8px 12px;
-             border-radius: 6px;
+             color: #dc3545;
              cursor: pointer;
-             font-size: 14px;
-             margin-left: 5px;
+             font-size: 18px;
+             padding: 5px;
          }
          
          .delete-btn:hover {
-             background: #c82333;
+             color: #c82333;
          }
         
         
@@ -322,8 +320,12 @@ function loadPatients() {
             <td class="patient-email">${patient.email || '-'}</td>
             <td class="patient-notes">${patient.notes || '-'}</td>
             <td>
-                <button class="edit-btn" onclick="editPatient(${index})">Modifier</button>
-                <button class="delete-btn" onclick="deletePatient(${index})">Supprimer</button>
+                <button class="edit-btn" onclick="editPatient(${index})" title="Modifier">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="delete-btn" onclick="deletePatient(${index})" title="Supprimer">
+                    <i class="fas fa-trash"></i>
+                </button>
             </td>
         </tr>
     `).join('');
@@ -380,8 +382,12 @@ function searchPatients() {
                 <td class="patient-email">${patient.email || '-'}</td>
                 <td class="patient-notes">${patient.notes || '-'}</td>
                 <td>
-                    <button class="edit-btn" onclick="editPatient(${originalIndex})">Modifier</button>
-                    <button class="delete-btn" onclick="deletePatient(${originalIndex})">Supprimer</button>
+                    <button class="edit-btn" onclick="editPatient(${originalIndex})" title="Modifier">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="delete-btn" onclick="deletePatient(${originalIndex})" title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </td>
             </tr>
         `;
