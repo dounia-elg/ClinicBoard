@@ -109,6 +109,20 @@ export function patientsPage() {
              color: #666;
              font-style: italic;
          }
+         
+         .edit-btn {
+             background: #ffc107;
+             color: white;
+             border: none;
+             padding: 8px 12px;
+             border-radius: 6px;
+             cursor: pointer;
+             font-size: 14px;
+         }
+         
+         .edit-btn:hover {
+             background: #e0a800;
+         }
         
         
         
@@ -221,14 +235,15 @@ export function patientsPage() {
          <!-- Patients Table -->
          <div class="patients-table-container">
              <table class="patients-table">
-                 <thead>
-                     <tr>
-                         <th>Nom</th>
-                         <th>Téléphone</th>
-                         <th>E-mail</th>
-                         <th>Notes</th>
-                     </tr>
-                 </thead>
+                  <thead>
+                      <tr>
+                          <th>Nom</th>
+                          <th>Téléphone</th>
+                          <th>E-mail</th>
+                          <th>Notes</th>
+                          <th>Actions</th>
+                      </tr>
+                  </thead>
                  <tbody id="patientsList">
                      <!-- Patients will be loaded here -->
                  </tbody>
@@ -241,20 +256,21 @@ export function patientsPage() {
                 <i class="fas fa-plus"></i>
                 <h2>Ajouter un Patient</h2>
             </div>
-            <form id="patientForm" class="add-patient-form">
-                <div class="form-row">
-                    <input type="text" id="patientName" placeholder="Nom complet" required>
-                    <input type="tel" id="patientPhone" placeholder="Téléphone" required>
-                </div>
-                <div class="form-row">
-                    <input type="email" id="patientEmail" placeholder="E-mail">
-                    <input type="text" id="patientNotes" placeholder="Notes">
-                </div>
-                <button type="submit" class="save-btn">
-                    <i class="fas fa-save"></i>
-                    Enregistrer
-                </button>
-            </form>
+             <form id="patientForm" class="add-patient-form">
+                 <input type="hidden" id="editIndex" value="">
+                 <div class="form-row">
+                     <input type="text" id="patientName" placeholder="Nom complet" required>
+                     <input type="tel" id="patientPhone" placeholder="Téléphone" required>
+                 </div>
+                 <div class="form-row">
+                     <input type="email" id="patientEmail" placeholder="E-mail">
+                     <input type="text" id="patientNotes" placeholder="Notes">
+                 </div>
+                 <button type="submit" class="save-btn">
+                     <i class="fas fa-save"></i>
+                     <span id="saveBtnText">Enregistrer</span>
+                 </button>
+             </form>
         </div>
     `;
     
@@ -275,7 +291,7 @@ function loadPatients() {
     if (patients.length === 0) {
         patientsList.innerHTML = `
             <tr>
-                <td colspan="4" style="text-align: center; padding: 40px; color: #666;">
+                <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
                     <i class="fas fa-users" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
                     Aucun patient enregistré
                 </td>
@@ -290,6 +306,7 @@ function loadPatients() {
             <td class="patient-phone">${patient.phone}</td>
             <td class="patient-email">${patient.email || '-'}</td>
             <td class="patient-notes">${patient.notes || '-'}</td>
+            <td><button class="edit-btn" onclick="editPatient(${index})">Modifier</button></td>
         </tr>
     `).join('');
 }
@@ -327,7 +344,7 @@ function searchPatients() {
     if (filteredPatients.length === 0) {
         patientsList.innerHTML = `
             <tr>
-                <td colspan="4" style="text-align: center; padding: 40px; color: #666;">
+                <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
                     <i class="fas fa-search" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
                     Aucun patient trouvé pour "${searchTerm}"
                 </td>
@@ -336,14 +353,18 @@ function searchPatients() {
         return;
     }
     
-    patientsList.innerHTML = filteredPatients.map((patient, index) => `
-        <tr>
-            <td class="patient-name">${patient.name}</td>
-            <td class="patient-phone">${patient.phone}</td>
-            <td class="patient-email">${patient.email || '-'}</td>
-            <td class="patient-notes">${patient.notes || '-'}</td>
-        </tr>
-    `).join('');
+    patientsList.innerHTML = filteredPatients.map((patient, index) => {
+        const originalIndex = data.patients.indexOf(patient);
+        return `
+            <tr>
+                <td class="patient-name">${patient.name}</td>
+                <td class="patient-phone">${patient.phone}</td>
+                <td class="patient-email">${patient.email || '-'}</td>
+                <td class="patient-notes">${patient.notes || '-'}</td>
+                <td><button class="edit-btn" onclick="editPatient(${originalIndex})">Modifier</button></td>
+            </tr>
+        `;
+    }).join('');
 }
 
 function savePatient(e) {
@@ -353,17 +374,41 @@ function savePatient(e) {
     const phone = document.getElementById('patientPhone').value;
     const email = document.getElementById('patientEmail').value;
     const notes = document.getElementById('patientNotes').value;
+    const editIndex = document.getElementById('editIndex').value;
     
     const data = getData();
     const patient = { name, phone, email, notes };
     
-  
-    data.patients.push(patient);
+    if (editIndex !== '') {
+        //modifier patient deja kayn
+        data.patients[editIndex] = patient;
+    } else {
+        // nzidou patient jdid
+        data.patients.push(patient);
+    }
     
     saveData(data);
     loadPatients();
     
     // Clear form
     document.getElementById('patientForm').reset();
+    document.getElementById('editIndex').value = '';
+    document.getElementById('saveBtnText').textContent = 'Enregistrer';
 }
+
+
+window.editPatient = function(index) {
+    const data = getData();
+    const patient = data.patients[index];
+    
+    
+    document.getElementById('patientName').value = patient.name;
+    document.getElementById('patientPhone').value = patient.phone;
+    document.getElementById('patientEmail').value = patient.email || '';
+    document.getElementById('patientNotes').value = patient.notes || '';
+    document.getElementById('editIndex').value = index;
+    
+    
+    document.getElementById('saveBtnText').textContent = 'Mettre à jour';
+};
 
