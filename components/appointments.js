@@ -17,7 +17,60 @@ export function appointmentsPage() {
         .search-section {
             display: flex;
             gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .filter-section {
+            display: flex;
+            gap: 15px;
             margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+        }
+        
+        .filter-label {
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .filter-select {
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 14px;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .filter-select:focus {
+            outline: none;
+            border-color: #3ba851;
+            box-shadow: 0 0 0 3px rgba(59, 168, 81, 0.1);
+        }
+        
+        .clear-filters-btn {
+            padding: 12px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            align-self: end;
+        }
+        
+        .clear-filters-btn:hover {
+            background: #5a6268;
         }
         
         .search-input {
@@ -252,10 +305,28 @@ export function appointmentsPage() {
     div.appendChild(style);
     
     div.innerHTML += `
-        <div class="search-section">
-            <input type="text" id="searchInput" placeholder="Rechercher par patient, praticien..." class="search-input">
-            <button id="searchBtn" class="search-btn">
-                <i class="fas fa-search"></i>
+        
+        <div class="filter-section">
+            <div class="filter-group">
+                <label class="filter-label">Filtrer par Praticien</label>
+                <select id="practitionerFilter" class="filter-select">
+                    <option value="">Tous les praticiens</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label class="filter-label">Filtrer par Statut</label>
+                <select id="statusFilter" class="filter-select">
+                    <option value="">Tous les statuts</option>
+                    <option value="Scheduled">Programmé</option>
+                    <option value="Completed">Terminé</option>
+                    <option value="Cancelled">Annulé</option>
+                    <option value="No-show">Absent</option>
+                </select>
+            </div>
+            
+            <button id="clearFiltersBtn" class="clear-filters-btn">
+                Effacer les filtres
             </button>
         </div>
         
@@ -356,6 +427,7 @@ export function appointmentsPage() {
     setTimeout(() => {
         loadAppointments();
         loadPatients();
+        loadPractitioners();
         setupEvents();
     }, 0);
     
@@ -405,6 +477,24 @@ function loadPatients() {
     });
 }
 
+function loadPractitioners() {
+    const data = getData();
+    const appointments = data.appointments || [];
+    const practitionerFilter = document.getElementById('practitionerFilter');
+    
+    // Get unique practitioners from appointments
+    const practitioners = [...new Set(appointments.map(app => app.practitionerName))];
+    
+    practitionerFilter.innerHTML = '<option value="">Tous les praticiens</option>';
+    
+    practitioners.sort().forEach(practitioner => {
+        const option = document.createElement('option');
+        option.value = practitioner;
+        option.textContent = practitioner;
+        practitionerFilter.appendChild(option);
+    });
+}
+
 function setupEvents() {
     document.getElementById('appointmentForm').addEventListener('submit', (e) => {
         e.preventDefault();
@@ -447,55 +537,71 @@ function setupEvents() {
         
         saveData(data);
         loadAppointments();
+        loadPractitioners();
         document.getElementById('appointmentForm').reset();
         document.getElementById('editIndex').value = '';
         document.getElementById('formTitle').textContent = 'Ajouter un Rendez-vous';
         document.getElementById('saveBtnText').textContent = 'Enregistrer';
         document.getElementById('status').value = 'Scheduled';
     });
-    
-    document.getElementById('searchBtn').addEventListener('click', () => {
-        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-        const data = getData();
-        const appointments = data.appointments || [];
-        
-        if (!searchTerm) {
-            loadAppointments();
-            return;
-        }
-        
-        const filtered = appointments.filter(appointment => 
-            appointment.patientName.toLowerCase().includes(searchTerm) || 
-            appointment.practitionerName.toLowerCase().includes(searchTerm) ||
-            appointment.room.toLowerCase().includes(searchTerm) ||
-            appointment.type.toLowerCase().includes(searchTerm)
-        );
-        
-        const appointmentsList = document.getElementById('appointmentsList');
-        if (filtered.length === 0) {
-            appointmentsList.innerHTML = '<tr><td colspan="8" class="empty-message">Aucun résultat</td></tr>';
-        } else {
-            appointmentsList.innerHTML = filtered.map((appointment, index) => {
-                const originalIndex = data.appointments.indexOf(appointment);
-                return `
-                    <tr>
-                        <td><span class="patient-name">${appointment.patientName}</span></td>
-                        <td><span class="practitioner-name">${appointment.practitionerName}</span></td>
-                        <td><span class="appointment-datetime">${formatDateTime(appointment.date, appointment.time)}</span></td>
-                        <td><span class="room-info">${appointment.room}</span></td>
-                        <td><span class="consultation-type">${appointment.type}</span></td>
-                        <td><span class="duration-info">${appointment.duration} min</span></td>
-                        <td><span class="status-badge status-${appointment.status.toLowerCase()}">${getStatusText(appointment.status)}</span></td>
-                        <td>
-                            <button class="edit-btn" onclick="editAppointment(${originalIndex})" title="Modifier">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
+
+    document.getElementById('practitionerFilter').addEventListener('change', applyFilters);
+    document.getElementById('statusFilter').addEventListener('change', applyFilters);
+
+    document.getElementById('clearFiltersBtn').addEventListener('click', () => {
+        document.getElementById('practitionerFilter').value = '';
+        document.getElementById('statusFilter').value = '';
+        applyFilters();
     });
+}
+
+function applyFilters() {
+    const practitionerFilter = document.getElementById('practitionerFilter').value;
+    const statusFilter = document.getElementById('statusFilter').value;
+    
+    const data = getData();
+    const appointments = data.appointments || [];
+    
+    let filtered = appointments;
+    
+    // practitioner filter
+    if (practitionerFilter) {
+        filtered = filtered.filter(appointment => 
+            appointment.practitionerName === practitionerFilter
+        );
+    }
+    
+    // status filter
+    if (statusFilter) {
+        filtered = filtered.filter(appointment => 
+            appointment.status === statusFilter
+        );
+    }
+    
+    const appointmentsList = document.getElementById('appointmentsList');
+    if (filtered.length === 0) {
+        appointmentsList.innerHTML = '<tr><td colspan="8" class="empty-message">Aucun résultat</td></tr>';
+    } else {
+        appointmentsList.innerHTML = filtered.map((appointment, index) => {
+            const originalIndex = data.appointments.indexOf(appointment);
+            return `
+                <tr>
+                    <td><span class="patient-name">${appointment.patientName}</span></td>
+                    <td><span class="practitioner-name">${appointment.practitionerName}</span></td>
+                    <td><span class="appointment-datetime">${formatDateTime(appointment.date, appointment.time)}</span></td>
+                    <td><span class="room-info">${appointment.room}</span></td>
+                    <td><span class="consultation-type">${appointment.type}</span></td>
+                    <td><span class="duration-info">${appointment.duration} min</span></td>
+                    <td><span class="status-badge status-${appointment.status.toLowerCase()}">${getStatusText(appointment.status)}</span></td>
+                    <td>
+                        <button class="edit-btn" onclick="editAppointment(${originalIndex})" title="Modifier">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
 }
 
 function formatDateTime(date, time) {
