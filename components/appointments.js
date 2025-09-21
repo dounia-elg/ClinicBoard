@@ -144,6 +144,20 @@ export function appointmentsPage() {
             color: #f57c00;
         }
         
+        .edit-btn {
+            background: none;
+            border: none;
+            color: #ffc107;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 5px;
+            margin-right: 10px;
+        }
+        
+        .edit-btn:hover {
+            color: #e0a800;
+        }
+        
         
         .add-appointment-section {
             background: white;
@@ -256,6 +270,7 @@ export function appointmentsPage() {
                         <th>Type</th>
                         <th>Durée</th>
                         <th>Statut</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="appointmentsList"></tbody>
@@ -265,6 +280,7 @@ export function appointmentsPage() {
         <div class="add-appointment-section">
             <h3 class="section-title" id="formTitle">Ajouter un Rendez-vous</h3>
             <form id="appointmentForm">
+                <input type="hidden" id="editIndex" value="">
                 
                 <div class="form-grid">
                     <div class="form-group">
@@ -352,7 +368,7 @@ function loadAppointments() {
     const appointmentsList = document.getElementById('appointmentsList');
     
     if (appointments.length === 0) {
-        appointmentsList.innerHTML = '<tr><td colspan="7" class="empty-message">Aucun rendez-vous</td></tr>';
+        appointmentsList.innerHTML = '<tr><td colspan="8" class="empty-message">Aucun rendez-vous</td></tr>';
         return;
     }
     
@@ -365,6 +381,11 @@ function loadAppointments() {
             <td><span class="consultation-type">${appointment.type}</span></td>
             <td><span class="duration-info">${appointment.duration} min</span></td>
             <td><span class="status-badge status-${appointment.status.toLowerCase()}">${getStatusText(appointment.status)}</span></td>
+            <td>
+                <button class="edit-btn" onclick="editAppointment(${index})" title="Modifier">
+                    <i class="fas fa-edit"></i>
+                </button>
+            </td>
         </tr>
     `).join('');
 }
@@ -396,6 +417,8 @@ function setupEvents() {
         const type = document.getElementById('consultationType').value;
         const duration = document.getElementById('duration').value;
         const status = document.getElementById('status').value;
+        const editIndex = document.getElementById('editIndex').value;
+        
         if (!patientValue) {
             alert('Veuillez sélectionner un patient');
             return;
@@ -416,10 +439,18 @@ function setupEvents() {
             status
         };
         
-        data.appointments.push(appointment);
+        if (editIndex !== '') {
+            data.appointments[editIndex] = appointment;
+        } else {
+            data.appointments.push(appointment);
+        }
+        
         saveData(data);
         loadAppointments();
         document.getElementById('appointmentForm').reset();
+        document.getElementById('editIndex').value = '';
+        document.getElementById('formTitle').textContent = 'Ajouter un Rendez-vous';
+        document.getElementById('saveBtnText').textContent = 'Enregistrer';
         document.getElementById('status').value = 'Scheduled';
     });
     
@@ -442,19 +473,27 @@ function setupEvents() {
         
         const appointmentsList = document.getElementById('appointmentsList');
         if (filtered.length === 0) {
-            appointmentsList.innerHTML = '<tr><td colspan="7" class="empty-message">Aucun résultat</td></tr>';
+            appointmentsList.innerHTML = '<tr><td colspan="8" class="empty-message">Aucun résultat</td></tr>';
         } else {
-            appointmentsList.innerHTML = filtered.map((appointment, index) => `
-                <tr>
-                    <td><span class="patient-name">${appointment.patientName}</span></td>
-                    <td><span class="practitioner-name">${appointment.practitionerName}</span></td>
-                    <td><span class="appointment-datetime">${formatDateTime(appointment.date, appointment.time)}</span></td>
-                    <td><span class="room-info">${appointment.room}</span></td>
-                    <td><span class="consultation-type">${appointment.type}</span></td>
-                    <td><span class="duration-info">${appointment.duration} min</span></td>
-                    <td><span class="status-badge status-${appointment.status.toLowerCase()}">${getStatusText(appointment.status)}</span></td>
-                </tr>
-            `).join('');
+            appointmentsList.innerHTML = filtered.map((appointment, index) => {
+                const originalIndex = data.appointments.indexOf(appointment);
+                return `
+                    <tr>
+                        <td><span class="patient-name">${appointment.patientName}</span></td>
+                        <td><span class="practitioner-name">${appointment.practitionerName}</span></td>
+                        <td><span class="appointment-datetime">${formatDateTime(appointment.date, appointment.time)}</span></td>
+                        <td><span class="room-info">${appointment.room}</span></td>
+                        <td><span class="consultation-type">${appointment.type}</span></td>
+                        <td><span class="duration-info">${appointment.duration} min</span></td>
+                        <td><span class="status-badge status-${appointment.status.toLowerCase()}">${getStatusText(appointment.status)}</span></td>
+                        <td>
+                            <button class="edit-btn" onclick="editAppointment(${originalIndex})" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
     });
 }
@@ -474,4 +513,26 @@ function getStatusText(status) {
     };
     return statusMap[status] || status;
 }
+
+window.editAppointment = function(index) {
+    const data = getData();
+    const appointment = data.appointments[index];
+    
+    
+    const patientSelect = document.getElementById('patientSelect');
+    const patientOption = `${appointment.patientName}|${appointment.patientIndex}`;
+    patientSelect.value = patientOption;
+    
+    document.getElementById('practitionerName').value = appointment.practitionerName;
+    document.getElementById('appointmentDate').value = appointment.date;
+    document.getElementById('appointmentTime').value = appointment.time;
+    document.getElementById('roomNumber').value = appointment.room;
+    document.getElementById('consultationType').value = appointment.type;
+    document.getElementById('duration').value = appointment.duration;
+    document.getElementById('status').value = appointment.status;
+    document.getElementById('editIndex').value = index;
+    
+    document.getElementById('formTitle').textContent = 'Modifier Rendez-vous';
+    document.getElementById('saveBtnText').textContent = 'Mettre à jour';
+};
 
