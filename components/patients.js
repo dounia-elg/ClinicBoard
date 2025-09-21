@@ -123,6 +123,21 @@ export function patientsPage() {
          .edit-btn:hover {
              background: #e0a800;
          }
+         
+         .delete-btn {
+             background: #dc3545;
+             color: white;
+             border: none;
+             padding: 8px 12px;
+             border-radius: 6px;
+             cursor: pointer;
+             font-size: 14px;
+             margin-left: 5px;
+         }
+         
+         .delete-btn:hover {
+             background: #c82333;
+         }
         
         
         
@@ -306,7 +321,10 @@ function loadPatients() {
             <td class="patient-phone">${patient.phone}</td>
             <td class="patient-email">${patient.email || '-'}</td>
             <td class="patient-notes">${patient.notes || '-'}</td>
-            <td><button class="edit-btn" onclick="editPatient(${index})">Modifier</button></td>
+            <td>
+                <button class="edit-btn" onclick="editPatient(${index})">Modifier</button>
+                <button class="delete-btn" onclick="deletePatient(${index})">Supprimer</button>
+            </td>
         </tr>
     `).join('');
 }
@@ -361,7 +379,10 @@ function searchPatients() {
                 <td class="patient-phone">${patient.phone}</td>
                 <td class="patient-email">${patient.email || '-'}</td>
                 <td class="patient-notes">${patient.notes || '-'}</td>
-                <td><button class="edit-btn" onclick="editPatient(${originalIndex})">Modifier</button></td>
+                <td>
+                    <button class="edit-btn" onclick="editPatient(${originalIndex})">Modifier</button>
+                    <button class="delete-btn" onclick="deletePatient(${originalIndex})">Supprimer</button>
+                </td>
             </tr>
         `;
     }).join('');
@@ -410,5 +431,22 @@ window.editPatient = function(index) {
     
     
     document.getElementById('saveBtnText').textContent = 'Mettre à jour';
+};
+
+
+window.deletePatient = function(index) {
+    
+    if (confirm('Êtes-vous sûr de vouloir supprimer ce patient ?')) {
+        const data = getData();
+        
+        
+        data.patients.splice(index, 1);
+        
+        
+        saveData(data);
+        
+       
+        loadPatients();
+    }
 };
 
